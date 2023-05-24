@@ -88,5 +88,6 @@ public class AddressBook implements Serializable {
 
 
     //是否删除
+    @TableField
     private Integer isDeleted;
 }

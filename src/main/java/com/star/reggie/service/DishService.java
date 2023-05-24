@@ -10,7 +10,7 @@ public interface DishService extends IService<Dish> {
     public void saveWithFlavor(DishDto dishDto);
     public void updateWithFlavor(DishDto dishDto);
 
-    List<DishDto> getWithFlavor(Long categoryId);
+    List<DishDto> getWithFlavor(Dish dish);
 
 
 }

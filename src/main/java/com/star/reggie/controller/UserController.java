@@ -7,6 +7,7 @@ import com.star.reggie.service.UserService;
 import com.star.reggie.utils.ValidateCodeUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -15,6 +16,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import javax.servlet.http.HttpSession;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 @RestController
 @Slf4j
@@ -22,6 +24,8 @@ import java.util.Map;
 public class UserController {
     @Autowired
     UserService userService;
+    @Autowired
+    RedisTemplate redisTemplate;
     @PostMapping("/sendMsg")
     public R<String> post(@RequestBody  User user, HttpSession httpSession){
         String phone = user.getPhone();
@@ -29,9 +33,11 @@ public class UserController {
         if(phone!=null){
             String code = ValidateCodeUtils.generateValidateCode(4).toString();
             log.info(code);
-            httpSession.setAttribute(phone,code);
+            //session中缓存验证码
+//            httpSession.setAttribute(phone,code);
+            //redis缓存验证码
+            redisTemplate.opsForValue().set(phone,code,5, TimeUnit.MINUTES);
             return R.success("验证码发送成功");
-
         }
         return R.error("验证码发送失败");
     }
@@ -39,7 +45,11 @@ public class UserController {
     public R<User> login(@RequestBody Map map,HttpSession httpSession){
         String phone = map.get("phone").toString();
         String code = map.get("code").toString();
-        Object code1 = httpSession.getAttribute(phone);
+
+//        Object code1 = httpSession.getAttribute(phone);
+
+        Object code1 = redisTemplate.opsForValue().get(phone);
+
 
         if(code1!=null && code1.equals(code)){
             LambdaQueryWrapper<User> lambdaQueryWrapper = new LambdaQueryWrapper<>();
@@ -52,6 +62,8 @@ public class UserController {
 
             }
             httpSession.setAttribute("user",user.getId());
+            redisTemplate.delete(phone);
+
             return R.success(user);
         }
 

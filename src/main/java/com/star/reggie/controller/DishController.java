@@ -29,6 +29,7 @@ public class DishController {
     DishFlavorService dishFlavorService;
     @Autowired
     CategoryService categoryService;
+
     @GetMapping("/page")
     public R<Page<DishDto>> getPage(int page,int pageSize,String name){
         log.info("dishname-->"+name);
@@ -75,6 +76,8 @@ public class DishController {
     @PutMapping
     public R<String> put(@RequestBody DishDto dishDto){
         dishService.updateWithFlavor(dishDto);
+
+
         return R.success("修改成功！");
     }
 //    @GetMapping("/list")
@@ -86,9 +89,9 @@ public class DishController {
 //    }
 
     @GetMapping("/list")
-    public R<List<DishDto>> getWithFlavor(Long categoryId){
+    public R<List<DishDto>> getWithFlavor(Dish dish){
 
-        List<DishDto> list = dishService.getWithFlavor(categoryId);
+        List<DishDto> list = dishService.getWithFlavor(dish);
         return R.success(list);
     }
 
