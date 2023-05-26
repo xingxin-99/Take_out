@@ -7,6 +7,7 @@ import com.star.reggie.service.UserService;
 import com.star.reggie.utils.ValidateCodeUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.CachePut;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -41,6 +42,7 @@ public class UserController {
         }
         return R.error("验证码发送失败");
     }
+
     @PostMapping("/login")
     public R<User> login(@RequestBody Map map,HttpSession httpSession){
         String phone = map.get("phone").toString();
@@ -49,7 +51,10 @@ public class UserController {
 //        Object code1 = httpSession.getAttribute(phone);
 
         Object code1 = redisTemplate.opsForValue().get(phone);
-
+        if(code1==null)
+            return R.error("请重新发送验证码！");
+        if(!code1.equals(code))
+            return R.error("验证码输入错误！");
 
         if(code1!=null && code1.equals(code)){
             LambdaQueryWrapper<User> lambdaQueryWrapper = new LambdaQueryWrapper<>();
@@ -59,7 +64,6 @@ public class UserController {
                 user = new User();
                 user.setPhone(phone);
                 userService.save(user);
-
             }
             httpSession.setAttribute("user",user.getId());
             redisTemplate.delete(phone);

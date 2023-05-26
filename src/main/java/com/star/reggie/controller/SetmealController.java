@@ -13,6 +13,9 @@ import com.star.reggie.service.SetmealService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.CachePut;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
 
@@ -29,6 +32,7 @@ public class SetmealController {
     CategoryService categoryService;
 
 
+    @CacheEvict(value = "setmaelCache",allEntries = true)
     @PostMapping
     public R<String> savewithDish(@RequestBody SetmealDto setmealDto){
         setmealService.savewithDish(setmealDto);
@@ -56,23 +60,26 @@ public class SetmealController {
         pageDtoInfo.setRecords(collect);
         return R.success(pageDtoInfo);
     }
+    @Cacheable(value = "singleSetmaelCache",key="#id")
     @GetMapping("/{id}")
     public R<SetmealDto> getSetmeal(@PathVariable Long id){
         SetmealDto setmealDto = setmealService.getWithDishById(id);
         return R.success(setmealDto);
     }
-
+    @CacheEvict(value = "setmaelCache",allEntries = true)
     @PutMapping
     public R<String> putSetmeal(@RequestBody SetmealDto setmealDto){
         setmealService.updateWithDish(setmealDto);
         return R.success("保存成功！");
     }
     @DeleteMapping
+    @CacheEvict(value = "setmaelCache",allEntries = true)
     public R<String> deleteByIds(@RequestParam List<Long> ids){
         setmealService.deleteById(ids);
         return R.success("删除成功");
     }
 
+    @Cacheable(value="setmaelCache",key = "#setmeal.categoryId+'_'+#setmeal.status")
     @GetMapping("/list")
     public R<List<SetmealDto>> list(Setmeal setmeal){
         //根据分类id，查出该分类下所有在售状态的套餐
